@@ -65,3 +65,14 @@ class SQL_atm:
             except:
                 print("Введён некорректный пин-код")
                 return False
+
+
+    """Вывод на экран баланса карты"""
+    @staticmethod
+    def info_balance(number_card):
+        with sqlite3.connect("atm.db") as db:
+            cur = db.cursor()
+            cur.execute(f"""SELECT Balance FROM Users_data WHERE Number_card = {number_card}""")
+            result_info_balance = cur.fetchone()
+            balance_cart = result_info_balance[0]
+            print(f"Баланс карты: {balance_cart}")
