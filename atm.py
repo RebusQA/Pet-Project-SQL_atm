@@ -1,5 +1,5 @@
 
-from sql_qwery import SQL_atm
+from sql_query import SQL_atm
 
 
 class ATM():
@@ -13,7 +13,8 @@ class ATM():
 
         while True:
             if SQL_atm.input_card(number_card):
-                print("7777")
+                if SQL_atm.input_code(number_card):
+                    print("Проверка цикла")
             else:
                 break
 
