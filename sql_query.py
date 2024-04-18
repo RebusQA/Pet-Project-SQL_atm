@@ -76,3 +76,26 @@ class SQL_atm:
             result_info_balance = cur.fetchone()
             balance_cart = result_info_balance[0]
             print(f"Баланс карты: {balance_cart}")
+
+
+    """Снятие денег с карты"""
+    @staticmethod
+    def withdraw_money(number_card):
+        amount = input("Введите сумму которую хотите снять: ")
+        with sqlite3.connect("atm.db") as db:
+            cur = db.cursor()
+            cur.execute(f"""SELECT Balance FROM Users_data WHERE Number_card = {number_card}""")
+            result_info_balance = cur.fetchone()
+            balance_cart = result_info_balance[0]
+            try:
+                if int(amount) > balance_cart:
+                    print("На карте недостаточно денег")
+                    return False
+                else:
+                    cur.execute(f"""UPDATE Users_data SET Balance = Balance - {amount} WHERE Number_card = {number_card}""")
+                    db.commit()
+                    SQL_atm.info_balance(number_card)
+                    return True
+            except:
+                print("Попытка выполнить некорректное действие")
+                return False
