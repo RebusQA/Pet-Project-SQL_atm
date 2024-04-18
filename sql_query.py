@@ -81,7 +81,7 @@ class SQL_atm:
     """Снятие денег с карты"""
     @staticmethod
     def withdraw_money(number_card):
-        amount = input("Введите сумму которую хотите снять: ")
+        amount = input("Введите сумму, которую хотите снять: ")
         with sqlite3.connect("atm.db") as db:
             cur = db.cursor()
             cur.execute(f"""SELECT Balance FROM Users_data WHERE Number_card = {number_card}""")
@@ -104,7 +104,7 @@ class SQL_atm:
     """Внесение денег на баланс карты"""
     @staticmethod
     def depositing_money(number_card):
-        amount = input("Введите сумму которую хотите внести: ")
+        amount = input("Введите сумму, которую хотите внести: ")
         with sqlite3.connect("atm.db") as db:
             try:
                 cur = db.cursor()
@@ -113,5 +113,29 @@ class SQL_atm:
                 SQL_atm.info_balance(number_card)
                 return True
             except:
-                print("Попытка выполнить некорректное действие")
+                print("Попытка выполнить некорректное действие, введите корректный запрос")
                 return False
+
+
+    """Выбор операции по карте"""
+    @staticmethod
+    def input_operation(number_card):
+        operation = input("Введите операцию, которую хотите совершить: \n"
+                          "1. Узнать баланс\n"
+                          "2. Снять деньги\n"
+                          "3. Внести деньги\n"
+                          "4. Завершить работу\n")
+        if operation == "1":
+            SQL_atm.info_balance(number_card)
+
+        elif operation == "2":
+            SQL_atm.withdraw_money(number_card)
+
+        elif operation == "3":
+            SQL_atm.depositing_money(number_card)
+
+        elif operation == "4":
+            print("Всего доброго.")
+
+        else:
+            print("Данная операция недоступна")
