@@ -99,3 +99,19 @@ class SQL_atm:
             except:
                 print("Попытка выполнить некорректное действие")
                 return False
+
+
+    """Внесение денег на баланс карты"""
+    @staticmethod
+    def depositing_money(number_card):
+        amount = input("Введите сумму которую хотите внести: ")
+        with sqlite3.connect("atm.db") as db:
+            try:
+                cur = db.cursor()
+                cur.execute(f"""UPDATE Users_data SET Balance = Balance + {amount} WHERE Number_card = {number_card}""")
+                db.commit()
+                SQL_atm.info_balance(number_card)
+                return True
+            except:
+                print("Попытка выполнить некорректное действие")
+                return False
