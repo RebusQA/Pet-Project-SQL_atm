@@ -12,7 +12,7 @@ class SQL_atm:
             UserID INTEGER PRIMARY KEY AUTOINCREMENT,
             Number_card INTEGER NOT NULL,
             Pin_code INTEGER NOT NULL,
-            Balance INTEGER NOT NULL);            
+            Balance INTEGER NOT NULL);
             """)
             print("Создание таблицы Users_data")
 
@@ -104,16 +104,34 @@ class SQL_atm:
     """Внесение денег на баланс карты"""
     @staticmethod
     def depositing_money(number_card):
-        amount = input("Введите сумму, которую хотите внести: ")
         with sqlite3.connect("atm.db") as db:
             try:
+                recipient_card = input("Введите номер карты, на которую хотите внести деньги: ")
+                if not recipient_card.isdigit():
+                    print("Некорректный номер карты. Номер карты должен содержать только цифры.")
+                    return False
+
+                amount = int(input("Введите сумму, которую хотите внести: "))
+                if amount <= 0:
+                    print("Сумма внесения должна быть положительным числом.")
+                    return False
+
                 cur = db.cursor()
+                cur.execute(f"""SELECT Number_card FROM Users_data WHERE Number_card = {recipient_card}""")
+                result_card = cur.fetchone()
+                if result_card is None:
+                    print("Введенный номер карты не существует.")
+                    return False
+
                 cur.execute(f"""UPDATE Users_data SET Balance = Balance + {amount} WHERE Number_card = {number_card}""")
                 db.commit()
                 SQL_atm.info_balance(number_card)
                 return True
-            except:
-                print("Попытка выполнить некорректное действие, введите корректный запрос")
+            except ValueError:
+                print("Некорректная сумма внесения. Введите число.")
+                return False
+            except sqlite3.Error:
+                print("Произошла ошибка при выполнении запроса. Введите корректный запрос.")
                 return False
 
 
@@ -125,7 +143,8 @@ class SQL_atm:
                               "1. Узнать баланс\n"
                               "2. Снять деньги\n"
                               "3. Внести деньги\n"
-                              "4. Завершить работу\n")
+                              "4. Перевести денежные средства\n"
+                              "5. Завершить работу\n")
             if operation == "1":
                 SQL_atm.info_balance(number_card)
 
@@ -136,7 +155,45 @@ class SQL_atm:
                 SQL_atm.depositing_money(number_card)
 
             elif operation == "4":
+                recipient_card = input("Введите номер карты, на которую хотите перевести деньги: ")
+                if not recipient_card.isdigit():
+                    print("Некорректный номер карты. Номер карты должен содержать только цифры.")
+                    continue
+                SQL_atm.transfer_money(number_card, recipient_card)
+
+            elif operation == "5":
                 print("Всего доброго.")
                 return False
             else:
                 print("Данная операция недоступна")
+
+    """Перевод денег между картами"""
+    @staticmethod
+    def transfer_money(sender_card, recipient_card):
+        try:
+            amount = int(input("Введите сумму, которую хотите перевести: "))
+            if amount <= 0:
+                print("Сумма перевода должна быть положительным числом.")
+                return False
+
+            with sqlite3.connect("atm.db") as db:
+                cur = db.cursor()
+                # Проверяю достаточность средств на счете отправителя
+                cur.execute(f"""SELECT Balance FROM Users_data WHERE Number_card = {sender_card}""")
+                sender_balance = cur.fetchone()[0]
+                if sender_balance < amount:
+                    print("На вашем счете недостаточно средств для перевода.")
+                    return False
+                # Обновляю балансы обеих карт
+                cur.execute(f"""UPDATE Users_data SET Balance = Balance - {amount} WHERE Number_card = {sender_card}""")
+                cur.execute(
+                    f"""UPDATE Users_data SET Balance = Balance + {amount} WHERE Number_card = {recipient_card}""")
+                db.commit()
+                print("Перевод выполнен успешно.")
+                return True
+        except ValueError:
+            print("Некорректная сумма перевода. Введите число.")
+            return False
+        except sqlite3.Error as e:
+            print("Произошла ошибка при выполнении перевода:", e)
+            return False
