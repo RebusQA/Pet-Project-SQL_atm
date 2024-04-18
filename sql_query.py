@@ -120,22 +120,23 @@ class SQL_atm:
     """Выбор операции по карте"""
     @staticmethod
     def input_operation(number_card):
-        operation = input("Введите операцию, которую хотите совершить: \n"
-                          "1. Узнать баланс\n"
-                          "2. Снять деньги\n"
-                          "3. Внести деньги\n"
-                          "4. Завершить работу\n")
-        if operation == "1":
-            SQL_atm.info_balance(number_card)
+        while True:
+            operation = input("Введите операцию, которую хотите совершить: \n"
+                              "1. Узнать баланс\n"
+                              "2. Снять деньги\n"
+                              "3. Внести деньги\n"
+                              "4. Завершить работу\n")
+            if operation == "1":
+                SQL_atm.info_balance(number_card)
 
-        elif operation == "2":
-            SQL_atm.withdraw_money(number_card)
+            elif operation == "2":
+                SQL_atm.withdraw_money(number_card)
 
-        elif operation == "3":
-            SQL_atm.depositing_money(number_card)
+            elif operation == "3":
+                SQL_atm.depositing_money(number_card)
 
-        elif operation == "4":
-            print("Всего доброго.")
-
-        else:
-            print("Данная операция недоступна")
+            elif operation == "4":
+                print("Всего доброго.")
+                return False
+            else:
+                print("Данная операция недоступна")
