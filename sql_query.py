@@ -202,6 +202,9 @@ class SQL_atm:
                 payee = recipient_card
                 SQL_atm.report_operation_1(now_date, sender_card, type_operation, amount, payee)
 
+                # Добавление записи во второй отчет о переводе денег
+                SQL_atm.report_operation_2(now_date, payee, type_operation, amount, sender_card)
+
                 return True
         except ValueError:
             print("Некорректная сумма перевода. Введите число.")
@@ -215,6 +218,15 @@ class SQL_atm:
     @staticmethod
     def report_operation_1(now_date, number_card, type_operation, amount, payee):
 
+        """
+        Type_operation
+
+        1 - Снятие денег
+        2 - Пополнение счёта
+        3 - Перевод денег
+
+        """
+
         user_data = [
             (now_date, number_card, type_operation, amount, payee)
         ]
@@ -226,11 +238,16 @@ class SQL_atm:
             )
         print("Данные внесены в отчёт")
 
-"""
-Type_operation
+    @staticmethod
+    def report_operation_2(now_date, payee, type_operation, amount, sender):
 
-1 - Снятие денег
-2 - Пополнение счёта
-3 - Перевод денег
+        user_data = [
+            (now_date, payee, type_operation, amount, sender)
+        ]
 
-"""
+        with open("report_2.csv", "a", newline="") as file:
+            writer = csv.writer(file, delimiter=";")
+            writer.writerow(
+                user_data
+            )
+        print("Данные внесены в отчёт 2")
