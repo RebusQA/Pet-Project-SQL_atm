@@ -1,5 +1,8 @@
-
+import csv
+import datetime
 import sqlite3
+
+now_data = datetime.datetime.utcnow().strftime("%H:%M-%D.%M.%Y")
 
 class SQL_atm:
 
@@ -95,6 +98,7 @@ class SQL_atm:
                     cur.execute(f"""UPDATE Users_data SET Balance = Balance - {amount} WHERE Number_card = {number_card}""")
                     db.commit()
                     SQL_atm.info_balance(number_card)
+                    SQL_atm.report_operation_1(now_data, number_card, "1", amount, "")
                     return True
             except:
                 print("Попытка выполнить некорректное действие")
@@ -126,6 +130,7 @@ class SQL_atm:
                 cur.execute(f"""UPDATE Users_data SET Balance = Balance + {amount} WHERE Number_card = {number_card}""")
                 db.commit()
                 SQL_atm.info_balance(number_card)
+                SQL_atm.report_operation_1(now_data, number_card, "2", amount, "")
                 return True
             except ValueError:
                 print("Некорректная сумма внесения. Введите число.")
@@ -190,6 +195,13 @@ class SQL_atm:
                     f"""UPDATE Users_data SET Balance = Balance + {amount} WHERE Number_card = {recipient_card}""")
                 db.commit()
                 print("Перевод выполнен успешно.")
+
+                # Добавление записи в отчет о переводе денег
+                now_date = datetime.datetime.utcnow().strftime("%H:%M-%D.%M.%Y")
+                type_operation = "3"  # тип операции - перевод денег
+                payee = recipient_card
+                SQL_atm.report_operation_1(now_date, sender_card, type_operation, amount, payee)
+
                 return True
         except ValueError:
             print("Некорректная сумма перевода. Введите число.")
@@ -197,3 +209,28 @@ class SQL_atm:
         except sqlite3.Error as e:
             print("Произошла ошибка при выполнении перевода:", e)
             return False
+
+
+    """Отчёт об операциях"""
+    @staticmethod
+    def report_operation_1(now_date, number_card, type_operation, amount, payee):
+
+        user_data = [
+            (now_date, number_card, type_operation, amount, payee)
+        ]
+
+        with open("report_1.csv", "a", newline="") as file:
+            writer = csv.writer(file, delimiter=";")
+            writer.writerow(
+                user_data
+            )
+        print("Данные внесены в отчёт")
+
+"""
+Type_operation
+
+1 - Снятие денег
+2 - Пополнение счёта
+3 - Перевод денег
+
+"""
