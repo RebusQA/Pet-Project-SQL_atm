@@ -111,6 +111,10 @@ class SQL_atm:
         with sqlite3.connect("atm.db") as db:
             try:
                 recipient_card = input("Введите номер карты, на которую хотите внести деньги: ")
+                if recipient_card == number_card:
+                    print("Нельзя вносить деньги на ту же карту.")
+                    return False
+
                 if not recipient_card.isdigit():
                     print("Некорректный номер карты. Номер карты должен содержать только цифры.")
                     return False
@@ -161,6 +165,10 @@ class SQL_atm:
 
             elif operation == "4":
                 recipient_card = input("Введите номер карты, на которую хотите перевести деньги: ")
+                if recipient_card == number_card:
+                    print("Нельзя переводить деньги на ту же карту.")
+                    continue
+
                 if not recipient_card.isdigit():
                     print("Некорректный номер карты. Номер карты должен содержать только цифры.")
                     continue
@@ -183,26 +191,38 @@ class SQL_atm:
 
             with sqlite3.connect("atm.db") as db:
                 cur = db.cursor()
-                # Проверяю достаточность средств на счете отправителя
+                # Проверяем, существует ли карта получателя
+                cur.execute(f"""SELECT Number_card FROM Users_data WHERE Number_card = {recipient_card}""")
+                recipient_exists = cur.fetchone()
+                if recipient_exists is None:
+                    print("Карта получателя не существует.")
+                    return False
+
+                # Проверяем, не является ли карта получателя той же самой картой отправителя
+                if recipient_card == sender_card:
+                    print("Нельзя переводить деньги на ту же самую карту.")
+                    return False
+
+                # Проверяем, достаточно ли средств на счете отправителя
                 cur.execute(f"""SELECT Balance FROM Users_data WHERE Number_card = {sender_card}""")
                 sender_balance = cur.fetchone()[0]
                 if sender_balance < amount:
                     print("На вашем счете недостаточно средств для перевода.")
                     return False
-                # Обновляю балансы обеих карт
+
+                # Обновляем балансы обеих карт
                 cur.execute(f"""UPDATE Users_data SET Balance = Balance - {amount} WHERE Number_card = {sender_card}""")
-                cur.execute(
-                    f"""UPDATE Users_data SET Balance = Balance + {amount} WHERE Number_card = {recipient_card}""")
+                cur.execute(f"""UPDATE Users_data SET Balance = Balance + {amount} WHERE Number_card = {recipient_card}""")
                 db.commit()
                 print("Перевод выполнен успешно.")
 
-                # Добавление записи в отчет о переводе денег
-                now_date = datetime.datetime.utcnow().strftime("%H:%M-%D.%M.%Y")
-                type_operation = "3"  # тип операции - перевод денег
+                # Добавляем запись в отчет о переводе денег
+                now_date = datetime.datetime.utcnow().strftime("%H:%M-%d.%m.%Y")
+                type_operation = 3  # тип операции - перевод денег
                 payee = recipient_card
                 SQL_atm.report_operation_1(now_date, sender_card, type_operation, amount, payee)
 
-                # Добавление записи во второй отчет о переводе денег
+                # Добавляем запись во второй отчет о переводе денег
                 SQL_atm.report_operation_2(now_date, payee, type_operation, amount, sender_card)
 
                 return True
@@ -227,9 +247,7 @@ class SQL_atm:
 
         """
 
-        user_data = [
-            (now_date, number_card, type_operation, amount, payee)
-        ]
+        user_data = (now_date, number_card, type_operation, amount, payee)
 
         with open("report_1.csv", "a", newline="") as file:
             writer = csv.writer(file, delimiter=";")
@@ -241,9 +259,7 @@ class SQL_atm:
     @staticmethod
     def report_operation_2(now_date, payee, type_operation, amount, sender):
 
-        user_data = [
-            (now_date, payee, type_operation, amount, sender)
-        ]
+        user_data = (now_date, payee, type_operation, amount, sender)
 
         with open("report_2.csv", "a", newline="") as file:
             writer = csv.writer(file, delimiter=";")
